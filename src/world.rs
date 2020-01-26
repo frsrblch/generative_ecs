@@ -10,15 +10,15 @@ pub struct World {
 
 impl Display for World {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
-//        writeln!(f, "{}", self.get_world()).ok();
+        writeln!(f, "{}", self.get_world()).ok();
         writeln!(f, "{}", self.impl_world()).ok();
-//        writeln!(f, "{}", self.get_allocators()).ok();
-//        writeln!(f, "{}", self.get_state()).ok();
-//
-//        for arena in self.arenas.iter() {
-//            writeln!(f, "{}", arena.get_struct()).ok();
-//            writeln!(f, "{}", arena.get_data_row()).ok();
-//        }
+        writeln!(f, "{}", self.get_allocators()).ok();
+        writeln!(f, "{}", self.get_state()).ok();
+
+        for arena in self.arenas.iter() {
+            writeln!(f, "{}", arena.get_struct()).ok();
+            writeln!(f, "{}", arena.get_data_row()).ok();
+        }
 
         Ok(())
     }
@@ -45,30 +45,38 @@ impl World {
     }
 
     pub fn impl_world(&self) -> Impl {
-        let world = self.get_world();
+        Impl::new(&self.get_world())
+            .add_function(self.get_split())
+    }
 
-        let params = "&mut self";
+    fn get_split(&self) -> Function {
+        let fields = self.get_world().fields;
 
-        let mut return_type = String::from("(");
-        let mut code = String::from("(");
-        for (i, field) in world.fields.iter().enumerate() {
-            if i != 0 {
-                return_type.push_str(", ");
-                code.push_str(", ");
-            }
+        let return_type = fields.iter().cloned().map(|f| f.field_type).collect();
+        let return_fields = fields.iter().cloned().map(|f| f.name).collect();
 
-            return_type.push_str(&format!("&mut {}", field.field_type));
-            code.push_str(&format!("&mut self.{}", field.name));
-        }
-        return_type.push(')');
-        code.push(')');
+        let return_type = StrConcat {
+            iter: &return_type,
+            left_bound: "(",
+            right_bound: ")",
+            item_prepend: "&mut ",
+            item_append: "",
+            join: ", "
+        }.to_string();
 
-        Impl::new(&world)
-            .add_function(Function::new("split")
-                .with_parameters(&params)
-                .with_return(&return_type)
-                .add_line(CodeLine::new(0, &code))
-            )
+        let code = StrConcat {
+            iter: &return_fields,
+            left_bound: "(",
+            right_bound: ")",
+            item_prepend: "&mut self.",
+            item_append: "",
+            join: ", "
+        }.to_string();
+
+        Function::new("split")
+            .with_parameters("&mut self")
+            .with_return(&return_type)
+            .add_line(CodeLine::new(0, &code))
     }
 
     pub fn get_allocators(&self) -> Struct {
@@ -95,32 +103,37 @@ impl World {
     }
 }
 
-#[test]
-fn example() {
-    let system = Arena::fixed("System")
-        .add_component(Component::dense("name", "String"))
-        .add_component(Component::dense_from_type("Position"))
-        .add_component(Component::dense("radius", "Length"))
-        .add_component(Component::dense_from_type("Temperature"))
-        .add_default_component(Component::dense_from_type("Camera"));
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    let body = Arena::fixed("Body")
-        .add_component(Component::sparse("name", "String"))
-        .add_component(Component::dense_from_type("Position"));
+    #[test]
+    fn example() {
+        let system = Arena::fixed("System")
+            .add_component(Component::dense("name", "String"))
+            .add_component(Component::dense_from_type("Position"))
+            .add_component(Component::dense("radius", "Length"))
+            .add_component(Component::dense_from_type("Temperature"))
+            .add_default_component(Component::dense_from_type("Camera"));
 
-    let orbit = Arena::fixed("Orbit")
-        .add_component(Component::dense("parameters", "OrbitParameters"))
-        .add_component(Component::sparse("parent", "Id<Orbit>"))
-        .add_default_component(Component::dense("relative_pos", "Position"));
+        let body = Arena::fixed("Body")
+            .add_component(Component::sparse("name", "String"))
+            .add_component(Component::dense_from_type("Position"));
 
-    let world = World::new()
-        .add_static_component(StaticComponent::from_type("Time"))
-        .add_static_component(StaticComponent::from_type("Starfield"))
-        .add_arena(system)
-        .add_arena(body)
-        .add_arena(orbit);
+        let orbit = Arena::fixed("Orbit")
+            .add_component(Component::dense("parameters", "OrbitParameters"))
+            .add_component(Component::sparse("parent", "Id<Orbit>"))
+            .add_default_component(Component::dense("relative_pos", "Position"));
 
-    println!("{}", world);
+        let world = World::new()
+            .add_static_component(StaticComponent::from_type("Time"))
+            .add_static_component(StaticComponent::from_type("Starfield"))
+            .add_arena(system)
+            .add_arena(body)
+            .add_arena(orbit);
 
-    assert!(false);
+        println!("{}", world);
+
+        assert!(false);
+    }
 }
