@@ -8,6 +8,7 @@ pub struct Arena {
     pub name: CamelCase,
     pub allocator: Allocator,
     pub components: Vec<Component>,
+    pub default_components: Vec<Component>,
 }
 
 impl Arena {
@@ -16,6 +17,7 @@ impl Arena {
             name: name.try_into().unwrap(),
             allocator: Allocator::Fixed,
             components: Default::default(),
+            default_components: Default::default(),
         }
     }
 
@@ -24,11 +26,17 @@ impl Arena {
             name: name.try_into().unwrap(),
             allocator: Allocator::Generational,
             components: Default::default(),
+            default_components: Default::default(),
         }
     }
 
     pub fn add_component(mut self, component: Component) -> Self {
         self.components.push(component);
+        self
+    }
+
+    pub fn add_default_component(mut self, component: Component) -> Self {
+        self.default_components.push(component);
         self
     }
 
@@ -45,7 +53,9 @@ impl Arena {
     }
 
     pub fn get_struct(&self) -> Struct {
+
         let fields = self.components.iter()
+            .chain(&self.default_components)
             .map(Component::get_arena_field)
             .collect();
 
@@ -64,7 +74,7 @@ impl Arena {
             .collect();
 
         Struct::new(name)
-            .with_derives(Derives::with_debug_default_clone())
+            .with_derives(Derives::with_debug())
             .with_fields(fields)
     }
 }

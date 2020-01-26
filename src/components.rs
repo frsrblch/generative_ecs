@@ -18,9 +18,27 @@ impl Component {
         }
     }
 
+    pub fn dense_from_type(data_type: impl TryInto<CamelCase, Error=impl Debug>) -> Self {
+        let data_type = data_type.try_into().unwrap();
+        Self {
+            name: data_type.clone().into(),
+            data_type: data_type.to_string(),
+            storage: Storage::Linear,
+        }
+    }
+
     pub fn sparse(name: &str, data_type: &str) -> Self {
         Self {
             name: name.try_into().unwrap(),
+            data_type: data_type.to_string(),
+            storage: Storage::LinearOption,
+        }
+    }
+
+    pub fn sparse_from_type(data_type: impl TryInto<CamelCase, Error=impl Debug>) -> Self {
+        let data_type = data_type.try_into().unwrap();
+        Self {
+            name: data_type.clone().into(),
             data_type: data_type.to_string(),
             storage: Storage::LinearOption,
         }

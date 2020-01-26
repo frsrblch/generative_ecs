@@ -71,18 +71,19 @@ impl World {
 fn example() {
     let system = Arena::fixed("System")
         .add_component(Component::dense("name", "String"))
-        .add_component(Component::dense("position", "Position"))
+        .add_component(Component::dense_from_type("Position"))
         .add_component(Component::dense("radius", "Length"))
-        .add_component(Component::dense("temperature", "Temperature"));
+        .add_component(Component::dense_from_type("Temperature"))
+        .add_default_component(Component::dense_from_type("Camera"));
 
     let body = Arena::fixed("Body")
         .add_component(Component::sparse("name", "String"))
-        .add_component(Component::dense("position", "Position"));
+        .add_component(Component::dense_from_type("Position"));
 
     let orbit = Arena::fixed("Orbit")
         .add_component(Component::dense("parameters", "OrbitParameters"))
         .add_component(Component::sparse("parent", "Id<Orbit>"))
-        .add_component(Component::dense("relative_pos", "Position"));
+        .add_default_component(Component::dense("relative_pos", "Position"));
 
     let world = World::new()
         .add_static_component(StaticComponent::from_type("Time"))
