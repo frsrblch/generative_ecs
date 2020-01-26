@@ -1,9 +1,8 @@
 use crate::*;
 use code_gen::*;
-use std::convert::TryInto;
 use std::fmt::{Display, Formatter, Error};
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct World {
     pub arenas: Vec<Arena>,
     pub components: Vec<StaticComponent>,
@@ -14,115 +13,83 @@ impl Display for World {
         writeln!(f, "{}", self.get_world()).ok();
         writeln!(f, "{}", self.get_allocators()).ok();
         writeln!(f, "{}", self.get_state()).ok();
+
+        for arena in self.arenas.iter() {
+            writeln!(f, "{}", arena.get_struct()).ok();
+            writeln!(f, "{}", arena.get_data_row()).ok();
+        }
+
         Ok(())
     }
 }
 
 impl World {
+    pub fn new() -> Self { Default::default() }
+
+    pub fn add_arena(mut self, arena: Arena) -> Self {
+        self.arenas.push(arena);
+        self
+    }
+
+    pub fn add_static_component(mut self, component: StaticComponent) -> Self {
+        self.components.push(component);
+        self
+    }
+
     pub fn get_world(&self) -> Struct {
-        Struct {
-            name: "World".try_into().unwrap(),
-            visibility: Visibility::Pub,
-            fields: Fields::Standard(vec![
-                Field {
-                    visibility: Visibility::Pub,
-                    name: "allocators".try_into().unwrap(),
-                    field_type: "Allocators".to_string(),
-                },
-                Field {
-                    visibility: Visibility::Pub,
-                    name: "state".try_into().unwrap(),
-                    field_type: "State".to_string()
-                },
-            ]),
-        }
+        Struct::new("World")
+            .with_derives(Derives::with_debug_default_clone())
+            .add_field(Field::from_type("Allocators"))
+            .add_field(Field::from_type("State"))
     }
 
     pub fn get_allocators(&self) -> Struct {
-        let fields = self.arenas
-            .iter()
-            .map(|arena| Field {
-                visibility: Visibility::Pub,
-                name: arena.name.clone().into(),
-                field_type: arena.allocator.get_type(&arena),
-            })
+        let fields = self.arenas.iter()
+            .map(Arena::get_allocator_field)
             .collect();
 
-        Struct {
-            name: "Allocators".try_into().unwrap(),
-            visibility: Visibility::Pub,
-            fields: Fields::Standard(fields),
-        }
+        Struct::new("Allocators")
+            .with_derives(Derives::with_debug_default_clone())
+            .with_fields(fields)
     }
 
     pub fn get_state(&self) -> Struct {
-        let mut fields: Vec<Field> =self.components
-            .iter()
-            .map(StaticComponent::get_field)
+        let static_fields = self.components.iter().map(StaticComponent::get_field);
+        let arena_fields = self.arenas.iter().map(Arena::get_state_field);
+
+        let fields = static_fields
+            .chain(arena_fields)
             .collect();
 
-        fields.extend(
-            self.arenas
-                .iter()
-                .map(Arena::get_state_field)
-        );
-
-        Struct {
-            name: "State".try_into().unwrap(),
-            visibility: Visibility::Pub,
-            fields: Fields::Standard(fields),
-        }
+        Struct::new("State")
+            .with_derives(Derives::with_debug_default_clone())
+            .with_fields(fields)
     }
 }
 
 #[test]
 fn example() {
-    let components = vec![
-        StaticComponent {
-            name: "time".try_into().unwrap(),
-            data_type: "Time".to_string()
-        }
-    ];
+    let system = Arena::fixed("System")
+        .add_component(Component::dense("name", "String"))
+        .add_component(Component::dense("position", "Position"))
+        .add_component(Component::dense("radius", "Length"))
+        .add_component(Component::dense("temperature", "Temperature"));
 
-    let arenas = vec![
-        Arena {
-            name: "System".try_into().unwrap(),
-            allocator: Allocator::Fixed,
-            components: vec![
-                Component {
-                    name: "name".try_into().unwrap(),
-                    data_type: "String".to_string(),
-                    storage: Storage::Linear
-                },
-                Component {
-                    name: "position".try_into().unwrap(),
-                    data_type: "Position".to_string(),
-                    storage: Storage::Linear
-                },
-            ]
-        },
-        Arena {
-            name: "Body".try_into().unwrap(),
-            allocator: Allocator::Fixed,
-            components: vec![
-                Component {
-                    name: "name".try_into().unwrap(),
-                    data_type: "String".to_string(),
-                    storage: Storage::LinearOption,
-                },
-                Component {
-                    name: "position".try_into().unwrap(),
-                    data_type: "Position".to_string(),
-                    storage: Storage::Linear
-                },
-            ]
-        },
-    ];
+    let body = Arena::fixed("Body")
+        .add_component(Component::sparse("name", "String"))
+        .add_component(Component::dense("position", "Position"));
 
-    let world = World {
-        arenas,
-        components,
-    };
+    let orbit = Arena::fixed("Orbit")
+        .add_component(Component::dense("parameters", "OrbitParameters"))
+        .add_component(Component::sparse("parent", "Id<Orbit>"))
+        .add_component(Component::dense("relative_pos", "Position"));
+
+    let world = World::new()
+        .add_static_component(StaticComponent::from_type("Time"))
+        .add_static_component(StaticComponent::from_type("Starfield"))
+        .add_arena(system)
+        .add_arena(body)
+        .add_arena(orbit);
 
     println!("{}", world);
 
