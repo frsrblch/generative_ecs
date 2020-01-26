@@ -52,11 +52,11 @@ impl World {
     fn get_split(&self) -> Function {
         let fields = self.get_world().fields;
 
-        let return_type = fields.iter().cloned().map(|f| f.field_type).collect();
-        let return_fields = fields.iter().cloned().map(|f| f.name).collect();
+        let return_type: Vec<String> = fields.iter().cloned().map(|f| f.field_type).collect();
+        let return_fields: Vec<SnakeCase> = fields.iter().cloned().map(|f| f.name).collect();
 
         let return_type = StrConcat {
-            iter: &return_type,
+            iter: return_type,
             left_bound: "(",
             right_bound: ")",
             item_prepend: "&mut ",
@@ -65,7 +65,7 @@ impl World {
         }.to_string();
 
         let code = StrConcat {
-            iter: &return_fields,
+            iter: return_fields,
             left_bound: "(",
             right_bound: ")",
             item_prepend: "&mut self.",
