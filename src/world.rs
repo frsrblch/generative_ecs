@@ -118,19 +118,21 @@ mod tests {
 
         let body = Arena::fixed("Body")
             .add_component(Component::sparse("name", "String"))
-            .add_component(Component::dense_from_type("Position"));
-
-        let orbit = Arena::fixed("Orbit")
             .add_component(Component::dense("parameters", "OrbitParameters"))
-            .add_component(Component::sparse("parent", "Id<Orbit>"))
+            .add_component(Component::sparse("parent", "Id<Body>"))
+            .add_default_component(Component::dense_from_type("Position"))
             .add_default_component(Component::dense("relative_pos", "Position"));
+
+        let surface = Arena::fixed("Surface")
+            .add_component(Component::dense_from_type("Area"))
+            .add_default_component(Component::dense_from_type("Temperature"));
 
         let world = World::new()
             .add_static_component(StaticComponent::from_type("Time"))
             .add_static_component(StaticComponent::from_type("Starfield"))
             .add_arena(system)
             .add_arena(body)
-            .add_arena(orbit);
+            .add_arena(surface);
 
         println!("{}", world);
 
