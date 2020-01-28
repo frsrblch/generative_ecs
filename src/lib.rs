@@ -5,6 +5,7 @@ mod links;
 mod traits;
 mod ids;
 
+pub use world::*;
 pub use traits::*;
 pub use arenas::*;
 pub use components::*;

@@ -1,9 +1,11 @@
 use crate::*;
 use code_gen::*;
 use std::fmt::{Display, Formatter, Error};
+use std::convert::TryInto;
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct World {
+    pub name: CamelCase,
     pub arenas: Vec<Arena>,
     pub components: Vec<StaticComponent>,
 }
@@ -25,7 +27,13 @@ impl Display for World {
 }
 
 impl World {
-    pub fn new() -> Self { Default::default() }
+    pub fn new(name: &str) -> Self {
+        World {
+            name: name.try_into().unwrap(),
+            arenas: vec![],
+            components: vec![]
+        }
+    }
 
     pub fn add_arena(mut self, arena: Arena) -> Self {
         self.arenas.push(arena);
@@ -127,12 +135,17 @@ mod tests {
             .add_component(Component::dense_from_type("Area"))
             .add_default_component(Component::dense_from_type("Temperature"));
 
-        let world = World::new()
+        let atmosphere = Arena::fixed("Atmosphere")
+            .add_component(Component::dense("breathability", "bool"))
+            .add_component(Component::dense_from_type("GreenhouseRatio"));
+
+        let world = World::new("Game")
             .add_static_component(StaticComponent::from_type("Time"))
             .add_static_component(StaticComponent::from_type("Starfield"))
             .add_arena(system)
             .add_arena(body)
-            .add_arena(surface);
+            .add_arena(surface)
+            .add_arena(atmosphere);
 
         println!("{}", world);
 
