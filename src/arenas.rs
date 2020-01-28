@@ -79,8 +79,18 @@ impl Arena {
     }
 
     pub fn get_impl(&self) -> Impl {
+        let id = match self.allocator {
+            Allocator::Fixed => String::from("Id<Self>"),
+            Allocator::Generational => String::from("Valid<Self>"),
+        };
+        let data_row = self.get_data_row().get_type_string();
+        let allocator = match self.allocator {
+            Allocator::Fixed => String::from("FixedAllocator<Self>"),
+            Allocator::Generational => String::from("GenAllocator<Self>"),
+        };
+
         let mut insert = Function::new("insert")
-            .with_parameters(&format!("&mut self, id: {}, row: {}", self.get_id_type(), self.get_data_row().get_type_string()));
+            .with_parameters(&format!("&mut self, id: {}, row: {}", id, data_row));
 
         for component in self.components.iter() {
             let line = CodeLine::new(0, &format!("self.{}.insert(id, row.{});", component.name, component.name));
@@ -92,8 +102,17 @@ impl Arena {
             insert = insert.add_line(line);
         }
 
+        let create = Function::new("create")
+            .with_parameters(&format!("&mut self, row: {}, allocator: &mut {}", data_row, allocator))
+            .with_return(&self.get_id_type())
+            .add_line(CodeLine::new(0, "let id = allocator.create();"))
+            .add_line(CodeLine::new(0, "self.insert(id, row);"))
+            .add_line(CodeLine::new(0, "id"));
+
+
         Impl::new(&self.get_struct())
             .add_function(insert)
+            .add_function(create)
     }
 
     pub fn get_id_type(&self) -> String {
