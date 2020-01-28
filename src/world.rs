@@ -19,6 +19,7 @@ impl Display for World {
 
         for arena in self.arenas.iter() {
             writeln!(f, "{}", arena.get_struct()).ok();
+            writeln!(f, "{}", arena.get_impl()).ok();
             writeln!(f, "{}", arena.get_data_row()).ok();
         }
 
