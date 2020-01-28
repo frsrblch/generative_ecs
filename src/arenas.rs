@@ -1,5 +1,5 @@
 use crate::*;
-use code_gen::{Field, Visibility, CamelCase, Struct, Derives, Impl, Function, CodeLine};
+use code_gen::{Field, Visibility, CamelCase, Struct, Derives, Impl, Function, CodeLine, Indent};
 use std::convert::{TryInto, TryFrom};
 use std::fmt::Debug;
 
@@ -103,7 +103,12 @@ impl Arena {
         }
 
         let create = Function::new("create")
-            .with_parameters(&format!("&mut self, row: {}, allocator: &mut {}", data_row, allocator))
+            .with_parameters(&format!("\n{i2}&mut self,\n{i2} row: {row},\n{i2} allocator: &mut {al}\n{i1}",
+                                      row=data_row,
+                                      al=allocator,
+                                      i2=Indent(2),
+                                      i1=Indent(1))
+            )
             .with_return(&self.get_id_type())
             .add_line(CodeLine::new(0, "let id = allocator.create();"))
             .add_line(CodeLine::new(0, "self.insert(id, row);"))

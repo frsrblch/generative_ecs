@@ -2,3 +2,7 @@
 pub struct Link {
 
 }
+
+impl Link {
+
+}

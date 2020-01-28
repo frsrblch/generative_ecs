@@ -136,9 +136,9 @@ mod tests {
             .add_component(Component::dense_from_type("Area"))
             .add_default_component(Component::dense_from_type("Temperature"));
 
-        let atmosphere = Arena::fixed("Atmosphere")
-            .add_component(Component::dense("breathability", "bool"))
-            .add_component(Component::dense_from_type("GreenhouseRatio"));
+//        let atmosphere = Arena::fixed("Atmosphere")
+//            .add_component(Component::dense("breathability", "bool"))
+//            .add_component(Component::dense_from_type("GreenhouseRatio"));
 
         let world = World::new("Game")
             .add_static_component(StaticComponent::from_type("Time"))
@@ -146,7 +146,8 @@ mod tests {
             .add_arena(system)
             .add_arena(body)
             .add_arena(surface)
-            .add_arena(atmosphere);
+//            .add_arena(atmosphere)
+            ;
 
         println!("{}", world);
 
