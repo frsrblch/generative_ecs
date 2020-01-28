@@ -1,5 +1,5 @@
 use crate::*;
-use code_gen::{Field, Visibility, CamelCase, Struct, Derives};
+use code_gen::{Field, Visibility, CamelCase, Struct, Derives, Impl, Function, CodeLine};
 use std::convert::{TryInto, TryFrom};
 use std::fmt::Debug;
 
@@ -76,5 +76,44 @@ impl Arena {
         Struct::new(name)
             .with_derives(Derives::with_debug())
             .with_fields(fields)
+    }
+
+    pub fn get_impl(&self) -> Impl {
+        let mut insert = Function::new("insert")
+            .with_parameters(&format!("&mut self, id: {}, row: {}", self.get_id_type(), self.get_data_row().get_type_string()));
+
+        for component in self.components.iter() {
+            let line = CodeLine::new(0, &format!("self.{}.insert(id, row.{});", component.name, component.name));
+            insert = insert.add_line(line);
+        }
+
+        for component in self.default_components.iter() {
+            let line = CodeLine::new(0, &format!("self.{}.insert(id, Default::default());", &component.name));
+            insert = insert.add_line(line);
+        }
+
+        Impl::new(&self.get_struct())
+            .add_function(insert)
+    }
+
+    pub fn get_id_type(&self) -> String {
+        self.allocator.get_id_type(&self)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn arena_get_impl() {
+        let arena = Arena::fixed("Arena")
+            .add_component(Component::dense_from_type("Length"))
+            .add_default_component(Component::dense_from_type("Width"));
+
+        assert_eq!(
+            "impl Arena {\n    pub fn insert(&mut self, id: Id<Arena>, row: ArenaRow) {\n        self.length.insert(id, row.length);\n        self.width.insert(id, Default::default());\n    }\n}\n",
+            arena.get_impl().to_string()
+        );
     }
 }
