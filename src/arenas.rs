@@ -103,11 +103,12 @@ impl Arena {
         }
 
         let create = Function::new("create")
-            .with_parameters(&format!("\n{i2}&mut self,\n{i2} row: {row},\n{i2} allocator: &mut {al}\n{i1}",
-                                      row=data_row,
-                                      al=allocator,
-                                      i2=Indent(2),
-                                      i1=Indent(1))
+            .with_parameters(&format!(
+                "\n{i2}&mut self,\n{i2} row: {row},\n{i2} allocator: &mut {al}\n{i1}",
+                row=data_row,
+                al=allocator,
+                i2=Indent(2),
+                i1=Indent(1))
             )
             .with_return(&self.get_id_type())
             .add_line(CodeLine::new(0, "let id = allocator.create();"))
