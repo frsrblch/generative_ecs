@@ -3,13 +3,13 @@ use std::fmt::Debug;
 use std::str::FromStr;
 
 #[derive(Debug)]
-pub struct Component {
+pub struct ComponentType {
     pub name: SnakeCase,
     pub data_type: Type,
     pub storage: Storage,
 }
 
-impl Component {
+impl ComponentType {
     pub fn dense(name: &str, data_type: &str) -> Self {
         Self {
             name: name.parse().unwrap(),

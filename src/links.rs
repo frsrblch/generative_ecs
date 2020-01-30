@@ -2,4 +2,5 @@
 pub enum LinkType {
     Required,
     Optional,
+    Many,
 }

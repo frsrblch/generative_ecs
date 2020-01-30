@@ -12,3 +12,6 @@ bit-set = "0.5.1"
 
 [[example]]
 name = "space_adventures"
+
+[[example]]
+name = "leopards"

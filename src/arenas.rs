@@ -8,8 +8,8 @@ use std::collections::HashMap;
 pub struct Arena {
     pub name: CamelCase,
     pub allocator: Allocator,
-    pub components: Vec<Component>,
-    pub default_components: Vec<Component>,
+    pub components: Vec<ComponentType>,
+    pub default_components: Vec<ComponentType>,
     pub references: HashMap<CamelCase, LinkType>,
     pub ownership: HashMap<CamelCase, LinkType>,
 }
@@ -17,7 +17,7 @@ pub struct Arena {
 //	From	    To	        Relationsh	Use Case	                                        Example
 //	Permanent	Permanent	Owns	    A, B, C -> D	                                    shared component
 //	Permanent	Permanent	MaybeOwns	A -> Opt<B>	                                        not all bodies have an atmosphere
-//	Permanent	Permanent	ManyOwns	A -> [B]	                                        NEW
+//	Permanent	Permanent	ManyOwns	A -> [B]	                                        planet owns several mine sites
 //	Permanent	Permanent	Ref     	A -- B	                                            all bodies reference a system
 //	Permanent	Permanent	MaybeRef	A -- Opt<B>	                                        ??
 //	Permanent	Permanent	ManyRef	    A -- [B]	                                        NEW
@@ -26,7 +26,7 @@ pub struct Arena {
 //	Permanent	Transient	ManyOwns	A -> [B]	                                        NEW
 //	Permanent	Transient	Ref	        INVALID, cannot be unlinked if child removed	    -
 //	Permanent	Transient	MaybeRef	A -- Opt<B>	                                        ??
-//	Permanent	Transient	ManyRef 	A -- [B]	                                        NEW
+//	Permanent	Transient	ManyRef 	A -- [B]	                                        Systems lists bodies contained
 //	Transient	Permanent	Owns	    INVALID, child entity will leak if parent removed	-
 //	Transient	Permanent	MaybeOwns	INVALID, child entity will leak if parent removed	-
 //	Transient	Permanent	ManyOwns	INVALID, child entity will leak if parent removed	-
@@ -41,9 +41,12 @@ pub struct Arena {
 //	Transient	Transient	ManyRef	    A -- [B]                                            NEW
 
 // TODO examine cases of Owns Many
-// Owns         1:1
-// MaybeOwns    1:[0..1]
-// OwnsMany     1:[0..]
+// Link         1:1
+// MaybeLink    1:[0..1]
+// ManyLink     1:[0..]     owner does not point to owned, rather all owned reference owner
+// perhaps the valid case of T(a)-T(b)-Ref is actually a case of T(b)-T(a)-ManyOwn
+
+
 
 impl Arena {
     pub fn fixed(name: &str) -> Self {
@@ -68,12 +71,12 @@ impl Arena {
         }
     }
 
-    pub fn add_component(mut self, component: Component) -> Self {
+    pub fn add_component(mut self, component: ComponentType) -> Self {
         self.components.push(component);
         self
     }
 
-    pub fn add_default_component(mut self, component: Component) -> Self {
+    pub fn add_default_component(mut self, component: ComponentType) -> Self {
         self.default_components.push(component);
         self
     }
@@ -101,7 +104,7 @@ impl Arena {
     pub fn get_struct(&self) -> Struct {
         let fields = self.components.iter()
             .chain(&self.default_components)
-            .map(Component::get_arena_field)
+            .map(ComponentType::get_arena_field)
             .collect();
 
         Struct {
@@ -118,7 +121,7 @@ impl Arena {
         let name = CamelCase::from_str(name.as_str()).unwrap();
 
         let fields = self.components.iter()
-            .map(Component::get_data_field)
+            .map(ComponentType::get_data_field)
             .collect();
 
         Struct::new(name.as_str())
