@@ -65,14 +65,12 @@ impl Arena {
         self
     }
 
-    pub fn add_reference(mut self, reference_to: &Arena, link_type: LinkType) -> Self {
+    pub fn add_reference(&mut self, reference_to: &Arena, link_type: LinkType) {
         self.references.insert(reference_to.name.clone(), link_type);
-        self
     }
 
-    pub fn add_ownership(mut self, owned: &Arena, link_type: LinkType) -> Self {
+    pub fn add_ownership(&mut self, owned: &Arena, link_type: LinkType) {
         self.ownership.insert(owned.name.clone(), link_type);
-        self
     }
 
     pub fn get_allocator_field(&self) -> Field {

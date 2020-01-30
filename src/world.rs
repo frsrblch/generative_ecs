@@ -211,8 +211,8 @@ mod tests {
     fn invalid_transient_owning_permanent() {
         let perm = Arena::fixed("Perm");
 
-        let temp = Arena::generational("Temp")
-            .add_ownership(&perm, LinkType::Required);
+        let mut temp = Arena::generational("Temp");
+        temp.add_ownership(&perm, LinkType::Required);
 
         let invalid = World::new()
             .add_arena(perm)
@@ -227,8 +227,8 @@ mod tests {
     fn invalid_permanent_cannot_mandatory_own_transient() {
         let temp = Arena::generational("Temp");
 
-        let perm = Arena::fixed("Perm")
-            .add_ownership(&temp, LinkType::Required);
+        let mut perm = Arena::fixed("Perm");
+        perm.add_ownership(&temp, LinkType::Required);
 
         let invalid = World::new()
             .add_arena(perm)
@@ -243,8 +243,8 @@ mod tests {
     fn invalid_permanent_cannot_mandatory_refer_to_transient() {
         let temp = Arena::generational("Temp");
 
-        let perm = Arena::fixed("Perm")
-            .add_reference(&temp, LinkType::Required);
+        let mut perm = Arena::fixed("Perm");
+        perm.add_reference(&temp, LinkType::Required);
 
         let invalid = World::new()
             .add_arena(perm)
@@ -259,8 +259,8 @@ mod tests {
     fn invalid_transient_cannot_mandatory_own_permanent() {
         let perm = Arena::fixed("Perm");
 
-        let temp = Arena::generational("Temp")
-            .add_ownership(&perm, LinkType::Required);
+        let mut temp = Arena::generational("Temp");
+        temp.add_ownership(&perm, LinkType::Required);
 
         let invalid = World::new()
             .add_arena(perm)
@@ -275,8 +275,8 @@ mod tests {
     fn invalid_transient_cannot_optionally_own_permanent() {
         let perm = Arena::fixed("Perm");
 
-        let temp = Arena::generational("Temp")
-            .add_ownership(&perm, LinkType::Optional);
+        let mut temp = Arena::generational("Temp");
+        temp.add_ownership(&perm, LinkType::Optional);
 
         let invalid = World::new()
             .add_arena(perm)
@@ -291,12 +291,28 @@ mod tests {
     fn invalid_transient_cannot_have_mandatory_reference_to_transient() {
         let temp1 = Arena::generational("Temp1");
 
-        let temp2 = Arena::generational("Temp2")
-            .add_reference(&temp1, LinkType::Required);
+        let mut temp2 = Arena::generational("Temp2");
+        temp2.add_reference(&temp1, LinkType::Required);
 
         let invalid = World::new()
             .add_arena(temp1)
             .add_arena(temp2);
+
+        invalid.validate();
+    }
+
+    //	Transient	Transient	Ref	        MAYBE INVALID	    must point at owner, so refer is deleted along with it
+    #[test]
+    fn invalid_transient_can_have_mandatory_reference_to_transient_owner() {
+        let mut owner = Arena::generational("Temp1");
+        let mut owned = Arena::generational("Temp2");
+
+        owner.add_ownership(&owned, LinkType::Required);
+        owned.add_reference(&owner, LinkType::Required);
+
+        let invalid = World::new()
+            .add_arena(owner)
+            .add_arena(owned);
 
         invalid.validate();
     }
