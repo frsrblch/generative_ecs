@@ -53,7 +53,7 @@ impl Component {
     }
 
     pub fn get_data_field(&self) -> Field {
-        Field::new(self.name.clone(), self.storage.get_row_data_type(&self.data_type.to_string()))
+        Field::new(self.name.clone(), self.storage.get_row_data_type(self.data_type.clone()))
     }
 }
 
@@ -71,7 +71,7 @@ impl Storage {
         }
     }
 
-    pub fn get_row_data_type(&self, data_type: &str) -> Type {
+    pub fn get_row_data_type(&self, data_type: Type) -> Type {
         let s = match self {
             Storage::Linear => data_type.to_string(),
             Storage::LinearOption => format!("Option<{}>", data_type),
@@ -83,22 +83,23 @@ impl Storage {
 #[derive(Debug)]
 pub struct StaticComponent {
     pub name: SnakeCase,
-    pub data_type: String,
+    pub data_type: Type,
 }
 
 impl StaticComponent {
-    pub fn new(name: &str, data_type: &str) -> Self {
+    pub fn new(name: SnakeCase, data_type: Type) -> Self {
         Self {
-            name: name.parse().unwrap(),
-            data_type: data_type.to_string(),
+            name,
+            data_type,
         }
     }
 
     pub fn from_type(data_type: &str) -> Self {
-        let data_type: CamelCase = data_type.parse().unwrap();
+        let data_type = Type::from_str(data_type).unwrap();
+        let name: CamelCase = data_type.to_string().parse().unwrap();
         Self {
-            name: data_type.clone().into(),
-            data_type: data_type.to_string(),
+            name: name.into(),
+            data_type,
         }
     }
 
@@ -106,7 +107,7 @@ impl StaticComponent {
         Field {
             visibility: Visibility::Pub,
             name: self.name.clone(),
-            field_type: self.data_type.clone(),
+            field_type: self.data_type.to_string(),
         }
     }
 }
