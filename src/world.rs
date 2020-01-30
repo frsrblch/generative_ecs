@@ -113,6 +113,7 @@ impl World {
     fn validate(&self) {
         assert!(self.no_transient_owns_permanent());
         assert!(self.no_permanent_has_mandatory_link_to_transient());
+        assert!(self.no_transient_has_mandatory_reference_to_transient());
     }
 
     fn no_transient_owns_permanent(&self) -> bool {
@@ -125,14 +126,8 @@ impl World {
         !self.transient_entities().any(owns_permanent)
     }
 
-    fn get_arena(&self, name: &CamelCase) -> &Arena {
-        self.arenas.iter()
-            .find(|a| a.name.eq(name))
-            .expect(&format!("Expected arena not found in World: {}", name))
-    }
-
     fn no_permanent_has_mandatory_link_to_transient(&self) -> bool {
-        let mandatory_link_to_temporary = |arena: &Arena| {
+        let mandatory_link_to_transient = |arena: &Arena| {
             arena.ownership.iter()
                 .chain(arena.references.iter())
                 .map(|(name, link)| (self.get_arena(name), link))
@@ -141,7 +136,25 @@ impl World {
                 })
         };
 
-        !self.permanent_entities().any(mandatory_link_to_temporary)
+        !self.permanent_entities().any(mandatory_link_to_transient)
+    }
+
+    fn no_transient_has_mandatory_reference_to_transient(&self) -> bool {
+        let mandatory_reference_to_transient = |arena: &Arena| {
+            arena.references.iter()
+                .map(|(name, link)| (self.get_arena(name), link))
+                .any(|(reference, link)| {
+                    reference.allocator == Allocator::Generational && *link == LinkType::Required
+                })
+        };
+
+        !self.transient_entities().any(mandatory_reference_to_transient)
+    }
+
+    fn get_arena(&self, name: &CamelCase) -> &Arena {
+        self.arenas.iter()
+            .find(|a| a.name.eq(name))
+            .expect(&format!("Expected arena not found in World: {}", name))
     }
 
     fn permanent_entities(&self) -> impl Iterator<Item=&Arena> {
@@ -195,7 +208,7 @@ mod tests {
     //	Transient	Permanent	Maybe Owns	INVALID, child entity will leak if parent removed	-
     #[test]
     #[should_panic]
-    fn invalid_temporary_owning_permanent() {
+    fn invalid_transient_owning_permanent() {
         let perm = Arena::fixed("Perm");
 
         let temp = Arena::generational("Temp")
@@ -211,7 +224,7 @@ mod tests {
     //	Permanent	Transient	Owns	    INVALID, no reason for child to be temp if it cannot unlink
     #[test]
     #[should_panic]
-    fn invalid_permanent_cannot_mandatory_own_temporary() {
+    fn invalid_permanent_cannot_mandatory_own_transient() {
         let temp = Arena::generational("Temp");
 
         let perm = Arena::fixed("Perm")
@@ -227,7 +240,7 @@ mod tests {
     //	Permanent	Transient	Ref	        INVALID, cannot be unlinked if child removed	    -
     #[test]
     #[should_panic]
-    fn invalid_permanent_cannot_mandatory_refer_to_temporary() {
+    fn invalid_permanent_cannot_mandatory_refer_to_transient() {
         let temp = Arena::generational("Temp");
 
         let perm = Arena::fixed("Perm")
@@ -243,7 +256,7 @@ mod tests {
     //	Transient	Transient	Ref	        INVALID, cannot be unlinked if child removed	    must point at owner, so refer is deleted along with it
     #[test]
     #[should_panic]
-    fn invalid_temporary_cannot_have_mandatory_reference_to_transient() {
+    fn invalid_transient_cannot_have_mandatory_reference_to_transient() {
         let temp1 = Arena::generational("Temp1");
 
         let temp2 = Arena::generational("Temp2")
