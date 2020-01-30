@@ -29,7 +29,7 @@ pub struct Arena {
 //	Transient	Permanent	Maybe Ref	A -- Opt<B>	                                        ships can reference a system, but may not be in one
 //	Transient	Transient	Owns	    A, B, C -> D	                                    shared component, only deleted with the owner
 //	Transient	Transient	Maybe Owns	A -> Opt<B>	                                        optional or shared component, only deleted by the owner
-//	Transient	Transient	Ref	        INVALID, cannot be unlinked if child removed	    must point at owner, so refer is deleted along with it
+//	Transient	Transient	Ref	        MAYBE INVALID, must point at owner so that it can be deleted with it
 //	Transient	Transient	Maybe Ref	A -- Opt<B>                                         ship refers to its controller
 
 impl Arena {
