@@ -1,7 +1,6 @@
 use crate::*;
 use code_gen::*;
 use std::fmt::{Display, Formatter, Error};
-use std::convert::TryInto;
 
 #[derive(Debug)]
 pub struct World {
@@ -30,7 +29,7 @@ impl Display for World {
 impl World {
     pub fn new(name: &str) -> Self {
         World {
-            name: name.try_into().unwrap(),
+            name: name.parse().unwrap(),
             arenas: vec![],
             components: vec![]
         }
@@ -49,12 +48,12 @@ impl World {
     pub fn get_world(&self) -> Struct {
         Struct::new("World")
             .with_derives(Derives::with_debug_default_clone())
-            .add_field(Field::from_type("Allocators"))
-            .add_field(Field::from_type("State"))
+            .add_field(Field::from_type(Type::new("Allocators")))
+            .add_field(Field::from_type(Type::new("State")))
     }
 
     pub fn impl_world(&self) -> Impl {
-        Impl::new(&self.get_world())
+        Impl::new(self.get_world().typ)
             .add_function(self.get_split())
     }
 

@@ -4,6 +4,7 @@ mod components;
 mod links;
 mod traits;
 mod ids;
+mod allocators;
 
 pub use world::*;
 pub use traits::*;
@@ -11,3 +12,4 @@ pub use arenas::*;
 pub use components::*;
 pub use links::*;
 pub use ids::*;
+pub use allocators::*; // TODO setup prelude

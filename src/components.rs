@@ -1,5 +1,4 @@
 use code_gen::*;
-use std::convert::TryInto;
 use std::fmt::Debug;
 
 #[derive(Debug)]
@@ -12,14 +11,14 @@ pub struct Component {
 impl Component {
     pub fn dense(name: &str, data_type: &str) -> Self {
         Self {
-            name: name.try_into().unwrap(),
+            name: name.parse().unwrap(),
             data_type: data_type.to_string(),
             storage: Storage::Linear,
         }
     }
 
-    pub fn dense_from_type(data_type: impl TryInto<CamelCase, Error=impl Debug>) -> Self {
-        let data_type = data_type.try_into().unwrap();
+    pub fn dense_from_type(data_type: &str) -> Self {
+        let data_type: CamelCase = data_type.parse().unwrap();
         Self {
             name: data_type.clone().into(),
             data_type: data_type.to_string(),
@@ -29,16 +28,16 @@ impl Component {
 
     pub fn sparse(name: &str, data_type: &str) -> Self {
         Self {
-            name: name.try_into().unwrap(),
+            name: name.parse().unwrap(),
             data_type: data_type.to_string(),
             storage: Storage::LinearOption,
         }
     }
 
-    pub fn sparse_from_type(data_type: impl TryInto<CamelCase, Error=impl Debug>) -> Self {
-        let data_type = data_type.try_into().unwrap();
+    pub fn sparse_from_type(data_type: &str) -> Self {
+        let data_type: SnakeCase = data_type.parse().unwrap();
         Self {
-            name: data_type.clone().into(),
+            name: data_type.clone(),
             data_type: data_type.to_string(),
             storage: Storage::LinearOption,
         }
@@ -53,7 +52,7 @@ impl Component {
     }
 
     pub fn get_data_field(&self) -> Field {
-        Field::new(self.name.clone(), &self.storage.get_row_data_type(self.data_type.as_str()))
+        Field::new(self.name.clone(), self.storage.get_row_data_type(self.data_type.as_str()))
     }
 }
 
@@ -71,11 +70,12 @@ impl Storage {
         }
     }
 
-    pub fn get_row_data_type(&self, data_type: &str) -> String {
-        match self {
+    pub fn get_row_data_type(&self, data_type: &str) -> Type {
+        let s = match self {
             Storage::Linear => data_type.to_string(),
             Storage::LinearOption => format!("Option<{}>", data_type),
-        }
+        };
+        Type::new(s.as_str())
     }
 }
 
@@ -88,13 +88,13 @@ pub struct StaticComponent {
 impl StaticComponent {
     pub fn new(name: &str, data_type: &str) -> Self {
         Self {
-            name: name.try_into().unwrap(),
+            name: name.parse().unwrap(),
             data_type: data_type.to_string(),
         }
     }
 
-    pub fn from_type<E: Debug>(data_type: impl TryInto<CamelCase,Error=E>) -> Self {
-        let data_type = data_type.try_into().unwrap();
+    pub fn from_type(data_type: &str) -> Self {
+        let data_type: CamelCase = data_type.parse().unwrap();
         Self {
             name: data_type.clone().into(),
             data_type: data_type.to_string(),
