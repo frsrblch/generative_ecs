@@ -70,7 +70,7 @@ impl World {
             item_prepend: "&mut ",
             item_append: "",
             join: ", "
-        }.to_string().parse().unwrap();
+        }.to_string();
 
         let code = StrConcat {
             iter: return_fields,
