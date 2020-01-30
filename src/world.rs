@@ -239,4 +239,20 @@ mod tests {
 
         invalid.validate();
     }
+
+    //	Transient	Transient	Ref	        INVALID, cannot be unlinked if child removed	    must point at owner, so refer is deleted along with it
+    #[test]
+    #[should_panic]
+    fn invalid_temporary_cannot_have_mandatory_reference_to_transient() {
+        let temp1 = Arena::generational("Temp1");
+
+        let temp2 = Arena::generational("Temp2")
+            .add_reference(&temp1, LinkType::Required);
+
+        let invalid = World::new()
+            .add_arena(temp1)
+            .add_arena(temp2);
+
+        invalid.validate();
+    }
 }
