@@ -111,21 +111,18 @@ impl World {
     }
 
     fn validate(&self) {
-        assert!(self.no_temporary_own_permanent());
-        assert!(self.no_permanent_requied_to_own_temporary());
+        assert!(self.no_transient_owns_permanent());
+        assert!(self.no_permanent_has_mandatory_link_to_transient());
     }
 
-    fn no_temporary_own_permanent(&self) -> bool {
-        let mut temporary_entities = self.arenas.iter()
-            .filter(|arena| arena.allocator == Allocator::Generational);
-
+    fn no_transient_owns_permanent(&self) -> bool {
         let owns_permanent = |arena: &Arena| {
             arena.ownership.keys()
                 .map(|k| self.get_arena(k))
                 .any(|owned| owned.allocator == Allocator::Fixed)
         };
 
-        !temporary_entities.any(owns_permanent)
+        !self.transient_entities().any(owns_permanent)
     }
 
     fn get_arena(&self, name: &CamelCase) -> &Arena {
@@ -134,19 +131,27 @@ impl World {
             .expect(&format!("Expected arena not found in World: {}", name))
     }
 
-    fn no_permanent_requied_to_own_temporary(&self) -> bool {
-        let mut permanent_entities = self.arenas.iter()
-            .filter(|arena| arena.allocator == Allocator::Fixed);
-
-        let mandatory_owns_temporary = |arena: &Arena| {
+    fn no_permanent_has_mandatory_link_to_transient(&self) -> bool {
+        let mandatory_link_to_temporary = |arena: &Arena| {
             arena.ownership.iter()
+                .chain(arena.references.iter())
                 .map(|(name, link)| (self.get_arena(name), link))
                 .any(|(owned, link)| {
                     owned.allocator == Allocator::Generational && *link == LinkType::Required
                 })
         };
 
-        !permanent_entities.any(mandatory_owns_temporary)
+        !self.permanent_entities().any(mandatory_link_to_temporary)
+    }
+
+    fn permanent_entities(&self) -> impl Iterator<Item=&Arena> {
+        self.arenas.iter()
+            .filter(|arena| arena.allocator == Allocator::Fixed)
+    }
+
+    fn transient_entities(&self) -> impl Iterator<Item=&Arena> {
+        self.arenas.iter()
+            .filter(|arena| arena.allocator == Allocator::Generational)
     }
 }
 
