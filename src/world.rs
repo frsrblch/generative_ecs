@@ -2,7 +2,7 @@ use crate::*;
 use code_gen::*;
 use std::fmt::{Display, Formatter, Error};
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct World {
     pub arenas: Vec<Arena>,
     pub components: Vec<StaticComponent>,
@@ -156,7 +156,7 @@ impl World {
     fn get_arena(&self, name: &CamelCase) -> &Arena {
         self.arenas.iter()
             .find(|a| a.name.eq(name))
-            .expect(&format!("Expected arena not found in World: {}", name))
+            .unwrap_or_else(|| panic!("Expected arena not found in World: {}", name))
     }
 
     fn permanent_entities(&self) -> impl Iterator<Item=&Arena> {
