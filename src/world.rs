@@ -130,7 +130,7 @@ impl World {
     fn get_arena(&self, name: &CamelCase) -> &Arena {
         self.arenas.iter()
             .find(|a| a.name.eq(name))
-            .unwrap()
+            .expect(&format!("Expected arena not found in World: {}", name))
     }
 }
 
@@ -180,7 +180,8 @@ mod tests {
 
         let invalid = World::new()
             .add_arena(perm)
-            .add_arena(temp)
-            .to_string();
+            .add_arena(temp);
+
+        invalid.validate();
     }
 }
