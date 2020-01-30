@@ -113,7 +113,7 @@ impl World {
     fn validate(&self) {
         assert!(self.no_transient_owns_permanent());
         assert!(self.no_permanent_has_mandatory_link_to_transient());
-        assert!(self.no_transient_has_mandatory_reference_to_transient());
+        assert!(self.no_transient_has_mandatory_reference_to_non_owner_transient());
     }
 
     fn no_transient_owns_permanent(&self) -> bool {
@@ -139,18 +139,19 @@ impl World {
         !self.permanent_entities().any(mandatory_link_to_transient)
     }
 
-    fn no_transient_has_mandatory_reference_to_transient(&self) -> bool {
+    fn no_transient_has_mandatory_reference_to_non_owner_transient(&self) -> bool {
         let mandatory_reference_to_transient = |arena: &Arena| {
             arena.references.iter()
                 .map(|(name, link)| (self.get_arena(name), link))
                 .any(|(reference, link)| {
-                    reference.allocator == Allocator::Generational && *link == LinkType::Required
+                    reference.allocator == Allocator::Generational
+                        && *link == LinkType::Required
+                        && !reference.owns(arena)
                 })
         };
 
         !self.transient_entities().any(mandatory_reference_to_transient)
     }
-
     fn get_arena(&self, name: &CamelCase) -> &Arena {
         self.arenas.iter()
             .find(|a| a.name.eq(name))
