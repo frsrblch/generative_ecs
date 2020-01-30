@@ -152,6 +152,7 @@ impl World {
 
         !self.transient_entities().any(mandatory_reference_to_transient)
     }
+
     fn get_arena(&self, name: &CamelCase) -> &Arena {
         self.arenas.iter()
             .find(|a| a.name.eq(name))
