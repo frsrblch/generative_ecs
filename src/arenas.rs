@@ -14,23 +14,23 @@ pub struct Arena {
     pub ownership: HashMap<CamelCase, LinkType>,
 }
 
-//	From	To	Relationship	Use Case	Example
-//	Permanent	Permanent	Owns	A, B, C -> D	shared component
+//	From	    To	        Relationsh	Use Case	                                        Example
+//	Permanent	Permanent	Owns	    A, B, C -> D	                                    shared component
 //	Permanent	Permanent	Maybe Owns	A -> Opt<B>	not all bodies have an atmosphere
-//	Permanent	Permanent	Ref	A -- B	all bodies reference a system
-//	Permanent	Permanent	Maybe Ref	A -- Opt<B>	??
-//	Permanent	Transient	Owns	INVALID, cannot be unlinked if child removed	-
-//	Permanent	Transient	Maybe Owns	A -> Opt<B>	??
-//	Permanent	Transient	Ref	INVALID, cannot be unlinked if child removed	-
-//	Permanent	Transient	Maybe Ref	A -- Opt<B>	??
-//	Transient	Permanent	Owns	INVALID, child entity will leak if parent removed	-
+//	Permanent	Permanent	Ref     	A -- B	                                            all bodies reference a system
+//	Permanent	Permanent	Maybe Ref	A -- Opt<B>	                                        ??
+//	Permanent	Transient	Owns	    INVALID, cannot be unlinked if child removed	    -
+//	Permanent	Transient	Maybe Owns	A -> Opt<B>	                                        ??
+//	Permanent	Transient	Ref	        INVALID, cannot be unlinked if child removed	    -
+//	Permanent	Transient	Maybe Ref	A -- Opt<B>	                                        ??
+//	Transient	Permanent	Owns	    INVALID, child entity will leak if parent removed	-
 //	Transient	Permanent	Maybe Owns	INVALID, child entity will leak if parent removed	-
-//	Transient	Permanent	Ref	A -- B	colony references the body it's built upon
-//	Transient	Permanent	Maybe Ref	A -- Opt<B>	ships can reference a system, but may not be in one
-//	Transient	Transient	Owns	A, B, C -> D	shared component, only deleted with the owner
-//	Transient	Transient	Maybe Owns	A -> Opt<B>	optional or shared component, only deleted by the owner
-//	Transient	Transient	Ref	INVALID, cannot be unlinked if child removed	must point at owner, so refer is deleted along with it
-//	Transient	Transient	Maybe Ref	A -- Opt<B>	ship refers to its controller
+//	Transient	Permanent	Ref	        A -- B	                                            colony references the body it's built upon
+//	Transient	Permanent	Maybe Ref	A -- Opt<B>	                                        ships can reference a system, but may not be in one
+//	Transient	Transient	Owns	    A, B, C -> D	                                    shared component, only deleted with the owner
+//	Transient	Transient	Maybe Owns	A -> Opt<B>	                                        optional or shared component, only deleted by the owner
+//	Transient	Transient	Ref	        INVALID, cannot be unlinked if child removed	    must point at owner, so refer is deleted along with it
+//	Transient	Transient	Maybe Ref	A -- Opt<B>                                         ship refers to its controller
 
 impl Arena {
     pub fn fixed(name: &str) -> Self {
