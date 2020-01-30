@@ -137,7 +137,7 @@ impl<ID, T> Default for Component<ID, T> {
 impl<'a, ID, T> Component<ID, T> {
     pub fn new() -> Self { Default::default() }
 
-    pub fn insert(&mut self, id: &Id<ID>, value: T) {
+    pub fn insert(&mut self, id: Id<ID>, value: T) {
         match id.index {
             index if index < self.values.len() => self.values[index] = value,
             index if index == self.values.len() => self.values.push(value),
@@ -145,30 +145,30 @@ impl<'a, ID, T> Component<ID, T> {
         }
     }
 
-    pub fn get(&self, id: &Id<ID>) -> &T {
+    pub fn get(&self, id: Id<ID>) -> &T {
         self.values
             .get(id.index)
             .expect(&format!("{}: invalid index, confirm that Arena::insert() is configured properly", std::any::type_name::<Self>()))
 
     }
 
-    pub fn get_mut(&mut self, id: &Id<ID>) -> &mut T {
+    pub fn get_mut(&mut self, id: Id<ID>) -> &mut T {
         self.values
             .get_mut(id.index)
             .expect(&format!("{}: invalid index, confirm that Arena::insert() is configured properly", std::any::type_name::<Self>()))
     }
 }
 
-impl<ID, T> Index<&Id<ID>> for Component<ID, T> {
+impl<ID, T> Index<Id<ID>> for Component<ID, T> {
     type Output = T;
 
-    fn index(&self, index: &Id<ID>) -> &Self::Output {
+    fn index(&self, index: Id<ID>) -> &Self::Output {
         self.get(index)
     }
 }
 
-impl<ID, T> IndexMut<&Id<ID>> for Component<ID, T> {
-    fn index_mut(&mut self, index: &Id<ID>) -> &mut Self::Output {
+impl<ID, T> IndexMut<Id<ID>> for Component<ID, T> {
+    fn index_mut(&mut self, index: Id<ID>) -> &mut Self::Output {
         self.get_mut(index)
     }
 }
