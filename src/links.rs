@@ -1,8 +1,5 @@
 #[derive(Debug)]
-pub struct Link {
-
-}
-
-impl Link {
-
+pub enum LinkType {
+    Required,
+    Optional,
 }

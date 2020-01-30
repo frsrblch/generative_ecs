@@ -2,6 +2,7 @@ use crate::*;
 use code_gen::{Field, Visibility, CamelCase, Struct, Derives, Impl, Function, CodeLine, Type};
 use std::fmt::Debug;
 use std::str::FromStr;
+use std::collections::{HashSet, HashMap};
 
 #[derive(Debug)]
 pub struct Arena {
@@ -9,7 +10,27 @@ pub struct Arena {
     pub allocator: Allocator,
     pub components: Vec<Component>,
     pub default_components: Vec<Component>,
+    pub references: HashMap<CamelCase, LinkType>,
+    pub ownership: HashMap<CamelCase, LinkType>,
 }
+
+//	From	To	Relationship	Use Case	Example
+//	Permanent	Permanent	Owns	A, B, C -> D	shared component
+//	Permanent	Permanent	Maybe Owns	A -> Opt<B>	not all bodies have an atmosphere
+//	Permanent	Permanent	Ref	A -- B	all bodies reference a system
+//	Permanent	Permanent	Maybe Ref	A -- Opt<B>	??
+//	Permanent	Transient	Owns	INVALID, cannot be unlinked if child removed	-
+//	Permanent	Transient	Maybe Owns	A -> Opt<B>	??
+//	Permanent	Transient	Ref	INVALID, cannot be unlinked if child removed	-
+//	Permanent	Transient	Maybe Ref	A -- Opt<B>	??
+//	Transient	Permanent	Owns	INVALID, child entity will leak if parent removed	-
+//	Transient	Permanent	Maybe Owns	INVALID, child entity will leak if parent removed	-
+//	Transient	Permanent	Ref	A -- B	colony references the body it's built upon
+//	Transient	Permanent	Maybe Ref	A -- Opt<B>	ships can reference a system, but may not be in one
+//	Transient	Transient	Owns	A, B, C -> D	shared component, only deleted with the owner
+//	Transient	Transient	Maybe Owns	A -> Opt<B>	optional or shared component, only deleted by the owner
+//	Transient	Transient	Ref	INVALID, cannot be unlinked if child removed	must point at owner, so refer is deleted along with it
+//	Transient	Transient	Maybe Ref	A -- Opt<B>	ship refers to its controller
 
 impl Arena {
     pub fn fixed(name: &str) -> Self {
@@ -18,6 +39,8 @@ impl Arena {
             allocator: Allocator::Fixed,
             components: Default::default(),
             default_components: Default::default(),
+            references: Default::default(),
+            ownership: Default::default(),
         }
     }
 
@@ -27,6 +50,8 @@ impl Arena {
             allocator: Allocator::Generational,
             components: Default::default(),
             default_components: Default::default(),
+            references: Default::default(),
+            ownership: Default::default(),
         }
     }
 
@@ -37,6 +62,16 @@ impl Arena {
 
     pub fn add_default_component(mut self, component: Component) -> Self {
         self.default_components.push(component);
+        self
+    }
+
+    pub fn add_reference(mut self, reference_to: &Arena, link_type: LinkType) -> Self {
+        self.references.insert(reference_to.name.clone(), link_type);
+        self
+    }
+
+    pub fn add_ownership(mut self, owned: &Arena, link_type: LinkType) -> Self {
+        self.ownership.insert(owned.name.clone(), link_type);
         self
     }
 
