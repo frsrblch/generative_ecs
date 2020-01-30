@@ -4,6 +4,7 @@ use std::cmp::Ordering;
 use std::num::NonZeroU32;
 use std::fmt::{Display, Formatter, Result};
 use std::marker::PhantomData;
+use code_gen::Type;
 
 #[derive(Debug)]
 pub enum Allocator {
@@ -19,11 +20,13 @@ impl Allocator {
         }
     }
 
-    pub fn get_id_type(&self, arena: &Arena) -> String {
-        match self {
+    pub fn get_id_type(&self, arena: &Arena) -> Type {
+        let s = match self {
             Allocator::Fixed => format!("Id<{}>", arena.name),
             Allocator::Generational => format!("GenId<{}>", arena.name),
-        }
+        };
+
+        Type::new(&s)
     }
 }
 

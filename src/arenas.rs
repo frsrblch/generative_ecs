@@ -1,5 +1,5 @@
 use crate::*;
-use code_gen::{Field, Visibility, CamelCase, Struct, Derives, Impl, Function, CodeLine};
+use code_gen::{Field, Visibility, CamelCase, Struct, Derives, Impl, Function, CodeLine, Type};
 use std::fmt::Debug;
 use std::str::FromStr;
 
@@ -110,7 +110,7 @@ impl Arena {
                 row=data_row,
                 al=allocator,
             ))
-            .with_return(&self.get_id_type())
+            .with_return(self.get_id_type().to_string())
             .add_line(CodeLine::new(0, "let id = allocator.create();"))
             .add_line(CodeLine::new(0, "self.insert(id, row);"))
             .add_line(CodeLine::new(0, "id"));
@@ -120,7 +120,7 @@ impl Arena {
             .add_function(create)
     }
 
-    pub fn get_id_type(&self) -> String {
+    pub fn get_id_type(&self) -> Type {
         self.allocator.get_id_type(&self)
     }
 }

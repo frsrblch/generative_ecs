@@ -70,7 +70,7 @@ impl World {
             item_prepend: "&mut ",
             item_append: "",
             join: ", "
-        }.to_string();
+        }.to_string().parse().unwrap();
 
         let code = StrConcat {
             iter: return_fields,
@@ -83,7 +83,7 @@ impl World {
 
         Function::new("split")
             .with_parameters("&mut self")
-            .with_return(&return_type)
+            .with_return(return_type)
             .add_line(CodeLine::new(0, &code))
     }
 
