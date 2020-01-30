@@ -253,6 +253,38 @@ mod tests {
         invalid.validate();
     }
 
+    //	Transient	Permanent	Owns	    INVALID, child entity will leak if parent removed	-
+    #[test]
+    #[should_panic]
+    fn invalid_transient_cannot_mandatory_own_permanent() {
+        let perm = Arena::fixed("Perm");
+
+        let temp = Arena::generational("Temp")
+            .add_ownership(&perm, LinkType::Required);
+
+        let invalid = World::new()
+            .add_arena(perm)
+            .add_arena(temp);
+
+        invalid.validate();
+    }
+
+    //	Transient	Permanent	Maybe Owns	INVALID, child entity will leak if parent removed	-
+    #[test]
+    #[should_panic]
+    fn invalid_transient_cannot_optionally_own_permanent() {
+        let perm = Arena::fixed("Perm");
+
+        let temp = Arena::generational("Temp")
+            .add_ownership(&perm, LinkType::Optional);
+
+        let invalid = World::new()
+            .add_arena(perm)
+            .add_arena(temp);
+
+        invalid.validate();
+    }
+
     //	Transient	Transient	Ref	        INVALID, cannot be unlinked if child removed	    must point at owner, so refer is deleted along with it
     #[test]
     #[should_panic]
