@@ -112,6 +112,7 @@ impl World {
 
     fn validate(&self) {
         assert!(self.no_temporary_own_permanent());
+        assert!(self.no_permanent_requied_to_own_temporary());
     }
 
     fn no_temporary_own_permanent(&self) -> bool {
@@ -131,6 +132,21 @@ impl World {
         self.arenas.iter()
             .find(|a| a.name.eq(name))
             .expect(&format!("Expected arena not found in World: {}", name))
+    }
+
+    fn no_permanent_requied_to_own_temporary(&self) -> bool {
+        let mut permanent_entities = self.arenas.iter()
+            .filter(|arena| arena.allocator == Allocator::Fixed);
+
+        let mandatory_owns_temporary = |arena: &Arena| {
+            arena.ownership.iter()
+                .map(|(name, link)| (self.get_arena(name), link))
+                .any(|(owned, link)| {
+                    owned.allocator == Allocator::Generational && *link == LinkType::Required
+                })
+        };
+
+        !permanent_entities.any(mandatory_owns_temporary)
     }
 }
 
@@ -170,6 +186,8 @@ mod tests {
             .add_arena(atmosphere)
     }
 
+    //	Transient	Permanent	Owns	    INVALID, child entity will leak if parent removed	-
+    //	Transient	Permanent	Maybe Owns	INVALID, child entity will leak if parent removed	-
     #[test]
     #[should_panic]
     fn invalid_temporary_owning_permanent() {
@@ -177,6 +195,38 @@ mod tests {
 
         let temp = Arena::generational("Temp")
             .add_ownership(&perm, LinkType::Required);
+
+        let invalid = World::new()
+            .add_arena(perm)
+            .add_arena(temp);
+
+        invalid.validate();
+    }
+
+    //	Permanent	Transient	Owns	    INVALID, no reason for child to be temp if it cannot unlink
+    #[test]
+    #[should_panic]
+    fn invalid_permanent_cannot_mandatory_own_temporary() {
+        let temp = Arena::generational("Temp");
+
+        let perm = Arena::fixed("Perm")
+            .add_ownership(&temp, LinkType::Required);
+
+        let invalid = World::new()
+            .add_arena(perm)
+            .add_arena(temp);
+
+        invalid.validate();
+    }
+
+    //	Permanent	Transient	Ref	        INVALID, cannot be unlinked if child removed	    -
+    #[test]
+    #[should_panic]
+    fn invalid_permanent_cannot_mandatory_refer_to_temporary() {
+        let temp = Arena::generational("Temp");
+
+        let perm = Arena::fixed("Perm")
+            .add_reference(&temp, LinkType::Required);
 
         let invalid = World::new()
             .add_arena(perm)

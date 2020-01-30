@@ -19,7 +19,7 @@ pub struct Arena {
 //	Permanent	Permanent	Maybe Owns	A -> Opt<B>	                                        not all bodies have an atmosphere
 //	Permanent	Permanent	Ref     	A -- B	                                            all bodies reference a system
 //	Permanent	Permanent	Maybe Ref	A -- Opt<B>	                                        ??
-//	Permanent	Transient	Owns	    INVALID, cannot be unlinked if child removed	    -
+//	Permanent	Transient	Owns	    INVALID, no reason for child to be transient	    -
 //	Permanent	Transient	Maybe Owns	A -> Opt<B>	                                        ??
 //	Permanent	Transient	Ref	        INVALID, cannot be unlinked if child removed	    -
 //	Permanent	Transient	Maybe Ref	A -- Opt<B>	                                        ??
@@ -159,20 +159,3 @@ impl Arena {
         self.allocator.get_id_type(&self)
     }
 }
-
-//#[cfg(test)]
-//mod tests {
-//    use super::*;
-//
-//    #[test]
-//    fn arena_get_impl() {
-//        let arena = Arena::fixed("Arena")
-//            .add_component(Component::dense_from_type("Length"))
-//            .add_default_component(Component::dense_from_type("Width"));
-//
-//        assert_eq!(
-//            "impl Arena {\n    pub fn insert(&mut self, id: Id<Self>, row: ArenaRow) {\n        self.length.insert(id, row.length);\n        self.width.insert(id, Default::default());\n    }\n}\n",
-//            arena.get_impl().to_string()
-//        );
-//    }
-//}
