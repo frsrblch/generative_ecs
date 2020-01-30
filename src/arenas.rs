@@ -2,7 +2,7 @@ use crate::*;
 use code_gen::{Field, Visibility, CamelCase, Struct, Derives, Impl, Function, CodeLine, Type};
 use std::fmt::Debug;
 use std::str::FromStr;
-use std::collections::{HashSet, HashMap};
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct Arena {
