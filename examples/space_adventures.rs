@@ -25,7 +25,7 @@ fn main() {
 //            .add_component(Component::dense("breathability", "bool"))
 //            .add_component(Component::dense_from_type("GreenhouseRatio"));
 
-    let world = World::new("Game")
+    let world = World::new()
         .add_static_component(StaticComponent::from_type("Time"))
         .add_static_component(StaticComponent::from_type("Starfield"))
         .add_arena(system)

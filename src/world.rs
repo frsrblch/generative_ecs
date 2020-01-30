@@ -4,13 +4,14 @@ use std::fmt::{Display, Formatter, Error};
 
 #[derive(Debug)]
 pub struct World {
-    pub name: CamelCase,
     pub arenas: Vec<Arena>,
     pub components: Vec<StaticComponent>,
 }
 
 impl Display for World {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        self.validate();
+
         writeln!(f, "{}", self.get_world()).ok();
         writeln!(f, "{}", self.impl_world()).ok();
         writeln!(f, "{}", self.get_allocators()).ok();
@@ -27,9 +28,8 @@ impl Display for World {
 }
 
 impl World {
-    pub fn new(name: &str) -> Self {
+    pub fn new() -> Self {
         World {
-            name: name.parse().unwrap(),
             arenas: vec![],
             components: vec![]
         }
@@ -109,14 +109,36 @@ impl World {
             .with_derives(Derives::with_debug_default_clone())
             .with_fields(fields)
     }
+
+    fn validate(&self) {
+        assert!(self.no_temporary_own_permanent());
+    }
+
+    fn no_temporary_own_permanent(&self) -> bool {
+        let mut temporary_entities = self.arenas.iter()
+            .filter(|arena| arena.allocator == Allocator::Generational);
+
+        let owns_permanent = |arena: &Arena| {
+            arena.ownership.keys()
+                .map(|k| self.get_arena(k))
+                .any(|owned| owned.allocator == Allocator::Fixed)
+        };
+
+        !temporary_entities.any(owns_permanent)
+    }
+
+    fn get_arena(&self, name: &CamelCase) -> &Arena {
+        self.arenas.iter()
+            .find(|a| a.name.eq(name))
+            .unwrap()
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[test]
-    fn example() {
+    fn get_space_example() -> World {
         let system = Arena::fixed("System")
             .add_component(Component::dense("name", "String"))
             .add_component(Component::dense_from_type("Position"))
@@ -135,21 +157,30 @@ mod tests {
             .add_component(Component::dense_from_type("Area"))
             .add_default_component(Component::dense_from_type("Temperature"));
 
-//        let atmosphere = Arena::fixed("Atmosphere")
-//            .add_component(Component::dense("breathability", "bool"))
-//            .add_component(Component::dense_from_type("GreenhouseRatio"));
+        let atmosphere = Arena::fixed("Atmosphere")
+            .add_component(Component::dense("breathability", "bool"))
+            .add_component(Component::dense_from_type("GreenhouseRatio"));
 
-        let world = World::new("Game")
+        World::new()
             .add_static_component(StaticComponent::from_type("Time"))
             .add_static_component(StaticComponent::from_type("Starfield"))
             .add_arena(system)
             .add_arena(body)
             .add_arena(surface)
-//            .add_arena(atmosphere)
-            ;
+            .add_arena(atmosphere)
+    }
 
-        println!("{}", world);
+    #[test]
+    #[should_panic]
+    fn invalid_temporary_owning_permanent() {
+        let perm = Arena::fixed("Perm");
 
-        assert!(false);
+        let temp = Arena::generational("Temp")
+            .add_ownership(&perm, LinkType::Required);
+
+        let invalid = World::new()
+            .add_arena(perm)
+            .add_arena(temp)
+            .to_string();
     }
 }

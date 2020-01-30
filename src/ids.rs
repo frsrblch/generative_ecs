@@ -6,7 +6,7 @@ use std::fmt::{Display, Formatter, Result};
 use std::marker::PhantomData;
 use code_gen::Type;
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum Allocator {
     Fixed,
     Generational,

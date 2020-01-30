@@ -2,7 +2,6 @@ use crate::ids::*;
 use bit_set::BitSet;
 use std::marker::PhantomData;
 
-
 #[derive(Debug, Clone)]
 pub struct FixedAllocator<T> {
     next_index: usize,

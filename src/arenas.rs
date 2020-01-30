@@ -16,7 +16,7 @@ pub struct Arena {
 
 //	From	    To	        Relationsh	Use Case	                                        Example
 //	Permanent	Permanent	Owns	    A, B, C -> D	                                    shared component
-//	Permanent	Permanent	Maybe Owns	A -> Opt<B>	not all bodies have an atmosphere
+//	Permanent	Permanent	Maybe Owns	A -> Opt<B>	                                        not all bodies have an atmosphere
 //	Permanent	Permanent	Ref     	A -- B	                                            all bodies reference a system
 //	Permanent	Permanent	Maybe Ref	A -- Opt<B>	                                        ??
 //	Permanent	Transient	Owns	    INVALID, cannot be unlinked if child removed	    -
