@@ -170,7 +170,7 @@ impl Arena {
         };
 
         let mut insert = Function::new("insert")
-            .with_parameters(&format!("&mut self, id: {}, row: {}", id, data_row));
+            .with_parameters(&format!("&mut self, id: &{}, row: {}", id, data_row));
 
         for component in self.components.iter() {
             let line = CodeLine::new(0, &format!("self.{}.insert(id, row.{});", component.name, component.name));
@@ -190,7 +190,7 @@ impl Arena {
             ))
             .with_return(self.get_id_type().to_string())
             .add_line(CodeLine::new(0, "let id = allocator.create();"))
-            .add_line(CodeLine::new(0, "self.insert(id, row);"))
+            .add_line(CodeLine::new(0, "self.insert(&id, row);"))
             .add_line(CodeLine::new(0, "id"));
 
         Impl::new(self.get_arena_type())
