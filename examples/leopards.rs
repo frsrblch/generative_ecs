@@ -8,7 +8,7 @@ fn main() {
 
     let mut leopard = Arena::fixed("Leopard")
         .add_component(ComponentType::dense("name", "String"));
-    leopard.add_ownership(&spot, LinkType::Many);
+    leopard.add_ownership(&spot, LinkType::Optional);
 
     let world = World::new()
         .add_arena(spot)

@@ -337,22 +337,4 @@ mod tests {
 
         invalid.validate();
     }
-
-    #[test]
-    fn simple_example() {
-        let spot = Arena::fixed("Spot")
-            .add_component(ComponentType::dense_from_type("Color"));
-
-        let mut leopard = Arena::fixed("Leopard")
-            .add_component(ComponentType::dense("name", "String"));
-        leopard.add_ownership(&spot, LinkType::Many);
-
-        let world = World::new()
-            .add_arena(spot)
-            .add_arena(leopard);
-
-//        println!("{}", world.to_string());
-
-        panic!()
-    }
 }
