@@ -18,4 +18,5 @@ pub use prelude::*;
 pub mod prelude {
     pub use crate::allocators::{FixedAllocator, GenAllocator, Component};
     pub use crate::ids::{Id, GenId, Valid};
+    pub use crate::traits::Link;
 }
