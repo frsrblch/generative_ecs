@@ -1,5 +1,5 @@
 use crate::*;
-use code_gen::{Field, Visibility, CamelCase, Struct, Derives, Impl, Function, CodeLine, Type};
+use code_gen::{Field, Visibility, CamelCase, Struct, Derives, Impl, Function, CodeLine, Type, SnakeCase};
 use std::fmt::Debug;
 use std::str::FromStr;
 use std::collections::HashMap;
@@ -101,18 +101,29 @@ impl Arena {
         Field::new(self.name.clone().into(), self.name.clone().into())
     }
 
-    pub fn get_struct(&self) -> Struct {
-        let fields = self.components.iter()
+    pub fn get_struct(&self, world: &World) -> Struct {
+        let link_fields = self.ownership.iter()
+            .chain(self.references.iter())
+            .map(|(link_to, link_type)| (world.get_arena(link_to), link_type))
+            .filter_map(|(link_to, link_type)| self.get_link_component(link_to, link_type))
+            .collect::<Vec<_>>();
+
+        let fields = link_fields.iter()
+            .chain(&self.components)
             .chain(&self.default_components)
             .map(ComponentType::get_arena_field)
             .collect();
 
         Struct {
-            typ: self.name.clone().into(),
+            typ: self.get_arena_type(),
             visibility: Default::default(),
             derives: Derives::with_debug_default_clone(),
             fields,
         }
+    }
+
+    pub fn get_arena_type(&self) -> Type {
+        self.name.clone().into()
     }
 
     pub fn get_data_row(&self) -> Struct {
@@ -127,6 +138,24 @@ impl Arena {
         Struct::new(name.as_str())
             .with_derives(Derives::with_debug())
             .with_fields(fields)
+    }
+
+    fn get_link_component(&self, link_to: &Arena, link_type: &LinkType) -> Option<ComponentType> {
+        let name: SnakeCase = link_to.name.clone().into();
+
+        match link_type {
+            LinkType::Required => ComponentType {
+                name,
+                data_type: link_to.get_id_type(),
+                storage: Storage::Linear
+            }.into(),
+            LinkType::Optional => ComponentType {
+                name,
+                data_type: link_to.get_id_type(),
+                storage: Storage::LinearOption
+            }.into(),
+            LinkType::Many => None,
+        }
     }
 
     pub fn get_impl(&self) -> Impl {
@@ -164,7 +193,7 @@ impl Arena {
             .add_line(CodeLine::new(0, "self.insert(id, row);"))
             .add_line(CodeLine::new(0, "id"));
 
-        Impl::new(self.get_struct().typ)
+        Impl::new(self.get_arena_type())
             .add_function(insert)
             .add_function(create)
     }

@@ -1,12 +1,18 @@
 use crate::*;
 use code_gen::*;
 use std::fmt::{Display, Formatter, Error};
+use std::collections::HashMap;
+
+// Think about a better way to program the World.
+// Allocators and Arenas only make sense if one is already familiar with ECS.
+// Instead, compose types and build a world from them, similar to a more object-oriented approach.
 
 #[derive(Debug, Default)]
 pub struct World {
     pub uses: Vec<String>,
     pub arenas: Vec<Arena>,
     pub components: Vec<StaticComponent>,
+    pub links: HashMap<links::Link, LinkType>,
 }
 
 impl Display for World {
@@ -24,7 +30,7 @@ impl Display for World {
         writeln!(f, "{}", self.get_state()).ok();
 
         for arena in self.arenas.iter() {
-            writeln!(f, "{}", arena.get_struct()).ok();
+            writeln!(f, "{}", arena.get_struct(&self)).ok();
             writeln!(f, "{}", arena.get_impl()).ok();
             writeln!(f, "{}", arena.get_data_row()).ok();
         }
@@ -38,7 +44,8 @@ impl World {
         World {
             uses: vec!["generative_ecs::prelude::*".to_string()],
             arenas: vec![],
-            components: vec![]
+            components: vec![],
+            links: Default::default(),
         }
     }
 
@@ -165,7 +172,7 @@ impl World {
         !self.transient_entities().any(mandatory_reference_to_transient)
     }
 
-    fn get_arena(&self, name: &CamelCase) -> &Arena {
+    pub fn get_arena(&self, name: &CamelCase) -> &Arena {
         self.arenas.iter()
             .find(|a| a.name.eq(name))
             .unwrap_or_else(|| panic!("Expected arena not found in World: {}", name))
