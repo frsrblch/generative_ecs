@@ -4,7 +4,7 @@ fn main() {
     let target = std::path::Path::new(r#"C:\Users\Fraser Balch\source\generative_target\src\lib.rs"#);
 
     let spot = Arena::fixed("Spot")
-        .add_component(ComponentType::dense_from_type("Color"));
+        .add_component(ComponentType::dense("area", "f32"));
 
     let mut leopard = Arena::fixed("Leopard")
         .add_component(ComponentType::dense("name", "String"));

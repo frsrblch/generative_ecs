@@ -4,6 +4,7 @@ use std::fmt::{Display, Formatter, Error};
 
 #[derive(Debug, Default)]
 pub struct World {
+    pub uses: Vec<String>,
     pub arenas: Vec<Arena>,
     pub components: Vec<StaticComponent>,
 }
@@ -11,6 +12,11 @@ pub struct World {
 impl Display for World {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         self.validate();
+
+        for s in self.uses.iter() {
+            writeln!(f, "use {};", s).ok();
+        }
+        writeln!(f).ok();
 
         writeln!(f, "{}", self.get_world()).ok();
         writeln!(f, "{}", self.impl_world()).ok();
@@ -30,9 +36,15 @@ impl Display for World {
 impl World {
     pub fn new() -> Self {
         World {
+            uses: vec!["generative_ecs::prelude::*".to_string()],
             arenas: vec![],
             components: vec![]
         }
+    }
+
+    pub fn add_use(mut self, use_ref: &str) -> Self {
+        self.uses.push(use_ref.to_string());
+        self
     }
 
     pub fn add_arena(mut self, arena: Arena) -> Self {
