@@ -3,6 +3,7 @@ use bit_set::BitSet;
 use std::marker::PhantomData;
 use std::fmt::Debug;
 use std::ops::{Index, IndexMut};
+use crate::Insert;
 
 
 #[derive(Debug, Clone)]
@@ -137,39 +138,65 @@ impl<ID, T> Default for Component<ID, T> {
 impl<'a, ID, T> Component<ID, T> {
     pub fn new() -> Self { Default::default() }
 
-    pub fn insert(&mut self, id: Id<ID>, value: T) {
-        match id.index {
+    fn insert_unchecked(&mut self, id: usize, value: T) {
+        match id {
             index if index < self.values.len() => self.values[index] = value,
             index if index == self.values.len() => self.values.push(value),
             _ => { panic!("{}: invalid index, confirm that Arena::insert() is configured properly", std::any::type_name::<Self>()) }
         }
     }
 
-    pub fn get(&self, id: Id<ID>) -> &T {
+    fn get_unchecked(&self, id: usize) -> &T {
         self.values
-            .get(id.index)
+            .get(id)
             .expect(&format!("{}: invalid index, confirm that Arena::insert() is configured properly", std::any::type_name::<Self>()))
 
     }
 
-    pub fn get_mut(&mut self, id: Id<ID>) -> &mut T {
+    pub fn get_mut_unchecked(&mut self, id: usize) -> &mut T {
         self.values
-            .get_mut(id.index)
+            .get_mut(id)
             .expect(&format!("{}: invalid index, confirm that Arena::insert() is configured properly", std::any::type_name::<Self>()))
     }
 }
 
-impl<ID, T> Index<Id<ID>> for Component<ID, T> {
+impl<ID, T> Index<&Id<ID>> for Component<ID, T> {
     type Output = T;
 
-    fn index(&self, index: Id<ID>) -> &Self::Output {
-        self.get(index)
+    fn index(&self, index: &Id<ID>) -> &Self::Output {
+        self.get_unchecked(index.index)
     }
 }
 
-impl<ID, T> IndexMut<Id<ID>> for Component<ID, T> {
-    fn index_mut(&mut self, index: Id<ID>) -> &mut Self::Output {
-        self.get_mut(index)
+impl<ID, T> IndexMut<&Id<ID>> for Component<ID, T> {
+    fn index_mut(&mut self, index: &Id<ID>) -> &mut Self::Output {
+        self.get_mut_unchecked(index.index)
+    }
+}
+
+impl<ID, T> Index<&Valid<ID>> for Component<ID, T> {
+    type Output = T;
+
+    fn index(&self, index: &Valid<ID>) -> &Self::Output {
+        self.get_unchecked(index.id.id.index)
+    }
+}
+
+impl<ID, T> IndexMut<&Valid<ID>> for Component<ID, T> {
+    fn index_mut(&mut self, index: &Valid<ID>) -> &mut Self::Output {
+        self.get_mut_unchecked(index.id.id.index)
+    }
+}
+
+impl<ID, T> Insert<Id<ID>, T> for Component<ID, T> {
+    fn insert(&mut self, id: &Id<ID>, value: T) {
+        self.insert_unchecked(id.index, value);
+    }
+}
+
+impl<ID, T> Insert<Valid<ID>, T> for Component<ID, T> {
+    fn insert(&mut self, id: &Valid<ID>, value: T) {
+        self.insert_unchecked(id.id.id.index, value);
     }
 }
 
@@ -177,36 +204,14 @@ impl<ID, T> IndexMut<Id<ID>> for Component<ID, T> {
 mod tests {
     use super::*;
     use crate::allocators::{FixedAllocator, GenAllocator};
-    use crate::traits_new::Allocator;
-    use crate::ids::{Id, Valid};
     use crate::Generation;
 
 
     #[derive(Debug, Default, Clone)]
     struct Fixed;
 
-    impl Arena for Fixed {
-        type Id = Id<Self>;
-        type Row = ();
-        type Allocator = FixedAllocator<Self>;
-
-        fn insert(&mut self, id: &Self::Id, value: Self::Row) {
-            unimplemented!()
-        }
-    }
-
     #[derive(Debug, Default, Clone)]
     struct Gen;
-
-    impl Arena for Gen {
-        type Id = Valid<Self>;
-        type Row = ();
-        type Allocator = GenAllocator<Self>;
-
-        fn insert(&mut self, id: &Self::Id, value: Self::Row) {
-            unimplemented!()
-        }
-    }
 
     #[test]
     #[should_panic]
@@ -226,9 +231,9 @@ mod tests {
         let mut component = Component::<Fixed, u32>::new();
 
         let id = allocator.create();
-        component.insert(id, 3);
+        component.insert(&id, 3);
 
-        assert_eq!(&3, component.get(&id));
+        assert_eq!(&3, component.get_unchecked(id.index));
     }
 
     #[test]
@@ -246,7 +251,7 @@ mod tests {
 
         assert_eq!(id_0_1.id.index, id_0_2.id.id.index); // same index
         assert_ne!(id_0_1.gen, id_0_2.id.gen); // different gen
-        assert_eq!(&3, component.get(&id_0_2));
+        assert_eq!(&3, component.get_unchecked(id_0_2.index()));
     }
 
     #[test]
@@ -257,7 +262,7 @@ mod tests {
 
         let id = allocator.create();
 
-        let panics = component.get(&id);
+        let _panics = component.get_unchecked(id.index);
     }
 
     #[derive(Debug)]
