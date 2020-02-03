@@ -53,7 +53,11 @@ impl ComponentType {
     }
 
     pub fn get_data_field(&self) -> Field {
-        Field::new(self.name.clone(), self.storage.get_row_data_type(self.data_type.clone()))
+        Field {
+            visibility: Default::default(),
+            name: self.name.clone(),
+            field_type: self.storage.get_row_data_type(&self.data_type)
+        }
     }
 }
 
@@ -64,14 +68,14 @@ pub enum Storage {
 }
 
 impl Storage {
-    pub fn get_component_data_type(&self, data_type: Type) -> String {
+    pub fn get_component_data_type(&self, data_type: Type) -> Type {
         match self {
             Storage::Linear => format!("Component<Self, {}>", data_type),
             Storage::LinearOption => format!("Component<Self, Option<{}>>", data_type),
-        }
+        }.parse().unwrap()
     }
 
-    pub fn get_row_data_type(&self, data_type: Type) -> Type {
+    pub fn get_row_data_type(&self, data_type: &Type) -> Type {
         let s = match self {
             Storage::Linear => data_type.to_string(),
             Storage::LinearOption => format!("Option<{}>", data_type),
@@ -107,7 +111,7 @@ impl StaticComponent {
         Field {
             visibility: Visibility::Pub,
             name: self.name.clone(),
-            field_type: self.data_type.to_string(),
+            field_type: self.data_type.clone(),
         }
     }
 }

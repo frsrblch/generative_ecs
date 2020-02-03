@@ -13,11 +13,11 @@ pub enum Allocator {
 }
 
 impl Allocator {
-    pub fn get_type(self, arena: &Arena) -> String {
+    pub fn get_type(self, arena: &Arena) -> Type {
         match self {
             Allocator::Fixed => format!("FixedAllocator<{}>", arena.name),
             Allocator::Generational => format!("GenAllocator<{}>", arena.name),
-        }
+        }.parse().unwrap()
     }
 
     pub fn get_id_type(self, arena: &Arena) -> Type {

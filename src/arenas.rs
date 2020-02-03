@@ -98,7 +98,14 @@ impl Arena {
     }
 
     pub fn get_state_field(&self) -> Field {
-        Field::new(self.name.clone().into(), self.name.clone().into())
+        let field_name: SnakeCase = self.name.clone().into();
+        let field_type: Type = Type::new(self.name.as_str());
+
+        Field {
+            visibility: Default::default(),
+            name: field_name,
+            field_type
+        }
     }
 
     pub fn get_struct(&self, world: &World) -> Struct {
@@ -193,7 +200,7 @@ impl Arena {
             .add_line(CodeLine::new(0, "self.insert(&id, row);"))
             .add_line(CodeLine::new(0, "id"));
 
-        Impl::new(self.get_arena_type())
+        Impl::from(&self.get_arena_type())
             .add_function(insert)
             .add_function(create)
     }
