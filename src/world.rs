@@ -35,6 +35,10 @@ impl Display for World {
             writeln!(f, "{}", arena.get_data_row()).ok();
         }
 
+        for link_impl in self.get_link_implementations() {
+            writeln!(f, "{}", link_impl).ok();
+        }
+
         Ok(())
     }
 }
@@ -56,6 +60,7 @@ impl World {
 
     pub fn add_arena(mut self, arena: Arena) -> Self {
         self.arenas.push(arena);
+        self.update_links();
         self
     }
 
@@ -186,6 +191,81 @@ impl World {
     fn transient_entities(&self) -> impl Iterator<Item=&Arena> {
         self.arenas.iter()
             .filter(|arena| arena.allocator == Allocator::Generational)
+    }
+
+    fn update_links(&mut self) {
+        self.links = self.get_links();
+    }
+
+    fn get_links(&self) -> HashMap<links::Link, LinkType> {
+        let mut map = HashMap::new();
+
+        for arena in self.arenas.iter() {
+            for (owned, link_type) in arena.ownership.iter() {
+                let link = links::Link::new(&arena.name, owned);
+                map.insert(link, *link_type);
+            }
+
+            for (reference, link_type) in arena.references.iter() {
+                let link = links::Link::new(&arena.name, reference);
+                map.insert(link, *link_type);
+            }
+        }
+
+        map
+    }
+
+    pub fn get_link_implementations(&self) -> Vec<TraitImplementation> {
+        self.links.iter()
+            .filter_map(|(link, link_type)| {
+                link.get_implementation(self, link_type)
+            })
+            .collect()
+
+//        for (link, link_type) in self.links.iter() {
+//
+//        }
+//
+//
+//        let mut matched_sets: Vec<links::Link> = vec![];
+//        let mut implementations: Vec<TraitImplementation> = vec![];
+//
+//        let link_trait = crate::traits::get_link_trait();
+//        let trait_function = &link_trait.functions[0];
+//
+//        let state = self.get_state();
+//
+//
+//        for (link, link_type) in self.links.iter() {
+//
+//            let from_id = self.get_arena(&link.from).get_valid_id_type();
+//            let to_id = self.get_arena(&link.to).get_valid_id_type();
+//
+//            if matched_sets.iter().any(|l| l.overlaps(link)) {
+//                let implementation = implementations.iter_mut().find(|l| l.overlaps(link)).unwrap();
+//                                                                                //self.from.to.insert(
+//                implementation.functions[0].lines.push(CodeLine::new(0, &format!("self.{}.{}")));
+//            } else {
+//                let generics = Generics::two(link.from.as_str(), link.to.as_str());
+//
+//                let mut implementation = link_trait
+//                    .impl_for(&state)
+//                    .with_generics(generics)
+//                    .add_associated_type(TypeName::new("IdA"), from_id)
+//                    .add_associated_type(TypeName::new("IdB"), to_id);
+//
+//                let mut link_function = TraitFunction::new("link")
+//                    .with_parameters(&trait_function.parameters);
+//
+//
+//                implementation = implementation.add_function(link_function);
+//
+//                implementations.push(implementation);
+//                matched_sets.push(link.clone());
+//            }
+//        }
+//
+//        unimplemented!()
     }
 }
 

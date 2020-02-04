@@ -28,6 +28,15 @@ impl Allocator {
 
         Type::new(&s)
     }
+
+    pub fn get_valid_id_type(self, arena: &Arena) -> Type {
+        let s = match self {
+            Allocator::Fixed => format!("Id<{}>", arena.name),
+            Allocator::Generational => format!("Valid<{}>", arena.name),
+        };
+
+        Type::new(&s)
+    }
 }
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Ord, PartialOrd)]
@@ -109,6 +118,10 @@ impl<T> Id<T> {
             marker: PhantomData,
         }
     }
+
+    pub fn id(&self) -> Self {
+        *self
+    }
 }
 
 #[derive(Debug)]
@@ -176,6 +189,10 @@ impl<T> Valid<T> {
         Self {
             id,
         }
+    }
+
+    pub fn id(&self) -> GenId<T> {
+        self.id
     }
 
     pub fn index(&self) -> usize {

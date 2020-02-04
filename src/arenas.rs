@@ -161,7 +161,6 @@ impl Arena {
                 data_type: link_to.get_id_type(),
                 storage: Storage::LinearOption
             }.into(),
-            LinkType::Many => None,
         }
     }
 
@@ -206,10 +205,18 @@ impl Arena {
     }
 
     pub fn get_id_type(&self) -> Type {
-        self.allocator.get_id_type(&self)
+        self.allocator.get_id_type(self)
+    }
+
+    pub fn get_valid_id_type(&self) -> Type {
+        self.allocator.get_valid_id_type(self)
     }
 
     pub fn owns(&self, arena: &Arena) -> bool {
         self.ownership.contains_key(&arena.name)
+    }
+
+    pub fn references(&self, arena: &Arena) -> bool {
+        self.references.contains_key(&arena.name)
     }
 }
