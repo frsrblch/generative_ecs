@@ -61,12 +61,12 @@ impl Link {
 
         if let Some(link_type) = to.references.get(&from.name) {
             f = f.add_line(CodeLine::new(0, &format!(
-                "self.{}.{}.insert(a, {});",
+                "self.{}.{}.insert(b, {});",
                 to.get_state_field().name,
                 from.get_state_field().name,
                 match link_type {
-                    LinkType::Required => "b.id()",
-                    LinkType::Optional => "Some(b.id())",
+                    LinkType::Required => "a.id()",
+                    LinkType::Optional => "Some(a.id())",
                 }
             )));
         }

@@ -13,6 +13,7 @@ pub struct World {
     pub arenas: Vec<Arena>,
     pub components: Vec<StaticComponent>,
     pub links: HashMap<links::Link, LinkType>,
+    pub compound_entities: Vec<CompoundEntity>,
 }
 
 impl Display for World {
@@ -39,6 +40,10 @@ impl Display for World {
             writeln!(f, "{}", link_impl).ok();
         }
 
+        for compound in self.compound_entities.iter() {
+
+        }
+
         Ok(())
     }
 }
@@ -50,6 +55,7 @@ impl World {
             arenas: vec![],
             components: vec![],
             links: Default::default(),
+            compound_entities: vec![],
         }
     }
 

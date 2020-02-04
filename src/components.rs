@@ -2,7 +2,7 @@ use code_gen::*;
 use std::fmt::Debug;
 use std::str::FromStr;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ComponentType {
     pub name: SnakeCase,
     pub data_type: Type,
@@ -61,7 +61,7 @@ impl ComponentType {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq, Copy, Clone)]
 pub enum Storage {
     Linear,
     LinearOption,

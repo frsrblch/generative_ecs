@@ -5,6 +5,7 @@ mod links;
 mod traits;
 mod ids;
 mod allocators;
+mod compound_entity;
 
 pub use world::*;
 pub use traits::*;
@@ -14,6 +15,7 @@ pub use links::*;
 pub use ids::*;
 pub use allocators::*; // TODO setup prelude
 pub use prelude::*;
+pub use compound_entity::*;
 
 pub mod prelude {
     pub use crate::allocators::{FixedAllocator, GenAllocator, Component};

@@ -4,7 +4,7 @@ use std::fmt::Debug;
 use std::str::FromStr;
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Arena {
     pub name: CamelCase,
     pub allocator: Allocator,
@@ -143,25 +143,21 @@ impl Arena {
             .collect();
 
         Struct::new(name.as_str())
-            .with_derives(Derives::with_debug())
+            .with_derives(Derives::with_debug_clone())
             .with_fields(fields)
     }
 
     fn get_link_component(&self, link_to: &Arena, link_type: &LinkType) -> Option<ComponentType> {
         let name: SnakeCase = link_to.name.clone().into();
 
-        match link_type {
-            LinkType::Required => ComponentType {
-                name,
-                data_type: link_to.get_id_type(),
-                storage: Storage::Linear
-            }.into(),
-            LinkType::Optional => ComponentType {
-                name,
-                data_type: link_to.get_id_type(),
-                storage: Storage::LinearOption
-            }.into(),
-        }
+        ComponentType {
+            name,
+            data_type: link_to.get_id_type(),
+            storage: match link_type {
+                LinkType::Required => Storage::Linear,
+                LinkType::Optional => Storage::LinearOption,
+            }
+        }.into()
     }
 
     pub fn get_impl(&self) -> Impl {
