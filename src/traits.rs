@@ -11,14 +11,14 @@ pub trait Link<A, B> {
     fn link(&mut self, a: &Self::IdA, b: &Self::IdB);
 }
 
-impl<A, B, L: Link<A, B>> Link<B, A> for L {
-    type IdA = L::IdB;
-    type IdB = L::IdA;
-
-    fn link(&mut self, a: &Self::IdA, b: &Self::IdB) {
-        Link::<A, B>::link(self, b, a);
-    }
-}
+//impl<A, B, L: Link<A, B>> Link<B, A> for L {
+//    type IdA = L::IdB;
+//    type IdB = L::IdA;
+//
+//    fn link(&mut self, a: &Self::IdA, b: &Self::IdB) {
+//        Link::<A, B>::link(self, b, a);
+//    }
+//}
 
 pub fn get_link_trait() -> Trait {
     Trait::new("Link")
